@@ -66,10 +66,10 @@ result = structured_model.invoke(messages)
 此时 `result` 不再是 `AIMessage` 或字符串，而是通过校验的
 `LearningAssessment` 实例。
 
-DeepSeek V4 默认启用 Thinking mode，而该模式不接受 LangChain
-`function_calling` 方法发出的“强制调用指定工具”请求。因此，本项目的单次
-模型示例使用 DeepSeek 官方支持的 JSON mode，并在系统提示词中附上完整
-JSON Schema。JSON mode 保证返回合法 JSON，Pydantic 继续负责字段校验。
+本项目的单次模型示例使用 OpenAI 兼容接口普遍支持的 JSON mode，并在系统
+提示词中附上完整 JSON Schema。JSON mode 保证返回合法 JSON，Pydantic
+继续负责字段校验；这也能避开部分模型在 Thinking mode 下不支持强制调用
+指定工具的问题。
 
 ## 4. 给 Agent 的最终答案增加结构
 
@@ -92,8 +92,8 @@ result = state["structured_response"]
 `ToolStrategy` 会把 schema 转换成一种特殊的输出工具。模型通过工具调用
 提交字段，LangChain 负责校验；如果数据不合法，默认会把错误反馈给模型并让它重试。
 
-这里仅为 Agent 示例关闭 DeepSeek Thinking mode，因为 `ToolStrategy` 必须
-强制模型调用输出工具，而当前 Thinking mode 不支持这种 `tool_choice`。
+这里仅为 Agent 示例关闭 Thinking mode，因为 `ToolStrategy` 必须强制模型
+调用输出工具，而部分模型的 Thinking mode 不支持这种 `tool_choice`。
 
 ## 5. 两种写法怎么选
 
@@ -103,7 +103,7 @@ result = state["structured_response"]
 | Agent 需要先调用业务工具，再返回固定结构 | `create_agent(..., response_format=...)` |
 | 模型厂商原生支持严格 JSON Schema | `ProviderStrategy` |
 | 模型支持强制 Tool Calling | `ToolStrategy` / `method="function_calling"` |
-| DeepSeek Thinking mode 下的单次抽取 | `method="json_mode"` + 提示词中的 schema |
+| Thinking mode 下的单次抽取 | `method="json_mode"` + 提示词中的 schema |
 
 本项目的 Agent 示例仍使用 `ToolStrategy`，它会把前三课学过的 Tool Calling
 机制用于提交最终结构。

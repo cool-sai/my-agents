@@ -1,4 +1,4 @@
-"""统一的 LLM 客户端配置（DeepSeek，OpenAI 兼容）。"""
+"""统一的 OpenAI 兼容 LLM 客户端配置。"""
 
 from __future__ import annotations
 
@@ -10,18 +10,23 @@ from openai import OpenAI
 
 
 def _require_api_key() -> str:
-    api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+    api_key = (
+        os.getenv("LLM_API_KEY")
+        or os.getenv("GLM_API_KEY")
+        or os.getenv("DEEPSEEK_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+    )
     if not api_key:
         raise SystemExit(
-            "缺少 DEEPSEEK_API_KEY。\n"
-            "请在 .env 中设置：DEEPSEEK_API_KEY=sk-...\n"
-            "申请：https://platform.deepseek.com/api_keys"
+            "缺少模型 API Key。\n"
+            "请在 .env 中设置通用的 LLM_API_KEY，或厂商专用的 "
+            "GLM_API_KEY / DEEPSEEK_API_KEY。"
         )
     return api_key
 
 
 def get_base_url() -> str:
-    # DeepSeek 官方：https://api.deepseek.com （/v1 也可）
+    # 默认使用 DeepSeek；也可通过 .env 切换到其他 OpenAI 兼容接口。
     return os.getenv("LLM_BASE_URL", "https://api.deepseek.com")
 
 
@@ -62,7 +67,7 @@ def make_openai_client() -> OpenAI:
 def make_chat_openai(*, thinking: bool | None = None):
     """LangChain ChatOpenAI（02 / 03 / 04 用）。
 
-    thinking 仅用于支持该参数的 DeepSeek 模型；None 表示使用服务端默认值。
+    thinking 仅用于支持该参数的模型；None 表示使用服务端默认值。
     """
     from langchain_openai import ChatOpenAI
 

@@ -89,8 +89,8 @@ def run_model_demo(text: str) -> None:
     model = make_chat_openai()
     structured_model = model.with_structured_output(
         LearningAssessment,
-        # DeepSeek V4 默认开启 Thinking mode，不支持“强制调用指定工具”。
-        # json_mode 保证输出合法 JSON，再由 Pydantic 校验字段和约束。
+        # json_mode 保证输出合法 JSON，再由 Pydantic 校验字段和约束；
+        # 对不支持强制调用指定工具的模型也更兼容。
         method="json_mode",
     )
     schema = json.dumps(
@@ -116,8 +116,8 @@ def run_model_demo(text: str) -> None:
 def run_agent_demo(text: str) -> None:
     """Agent 调用：最终结构化结果位于 structured_response。"""
     agent = create_agent(
-        # ToolStrategy 需要强制调用输出工具；DeepSeek Thinking mode 不支持
-        # 强制 tool_choice，所以只在这个示例中关闭思考模式。
+        # ToolStrategy 需要强制调用输出工具，所以在这个示例中关闭思考模式，
+        # 避免部分模型的 Thinking mode 与 tool_choice 冲突。
         model=make_chat_openai(thinking=False),
         tools=[],
         system_prompt=(

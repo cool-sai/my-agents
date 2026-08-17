@@ -37,11 +37,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# 编辑 .env，填入 DEEPSEEK_API_KEY（https://platform.deepseek.com/api_keys）
+# 编辑 .env，填入 LLM_API_KEY，并选择兼容 OpenAI 协议的接口和模型
 ```
 
-默认走 **DeepSeek** OpenAI 兼容接口（`https://api.deepseek.com`，模型 `deepseek-v4-flash`）。
-配置见 `common/llm.py` 与 `.env`。
+当前示例配置使用 **GLM** 的 OpenAI 兼容接口
+（`https://open.bigmodel.cn/api/paas/v4`，模型 `glm-4.7-flash`）。
+也可以把 `LLM_BASE_URL` 和 `LLM_MODEL` 换回 DeepSeek；配置见
+`common/llm.py` 与 `.env.example`。
 
 ## 运行
 
