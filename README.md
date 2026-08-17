@@ -25,8 +25,10 @@
 | `02_langchain_agent.py` | **框架**：`create_agent` 一行搞定 loop |
 | `04_structured_output.py` | **结构化输出**：Pydantic + 模型 / Agent |
 | `04_structured_output.md` | 第 04 课讲义与课后练习 |
+| `05_agent_middleware.py` | **中间件**：动态提示、权限、错误处理、调用限制 |
+| `05_agent_middleware.md` | 第 05 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05`。
 
 ## 准备
 
@@ -62,6 +64,11 @@ python 02_langchain_agent.py
 python 04_structured_output.py validation
 python 04_structured_output.py model
 python 04_structured_output.py agent
+
+# Middleware：访客拒绝 / 管理员放行 / 工具错误
+python 05_agent_middleware.py guest
+python 05_agent_middleware.py admin
+python 05_agent_middleware.py error
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
