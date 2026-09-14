@@ -27,8 +27,10 @@
 | `04_structured_output.md` | 第 04 课讲义与课后练习 |
 | `05_agent_middleware.py` | **中间件**：动态提示、权限、错误处理、调用限制 |
 | `05_agent_middleware.md` | 第 05 课讲义与运行场景 |
+| `06_session_memory.py` | **短期记忆**：自己保存 messages / checkpointer + thread_id |
+| `06_session_memory.md` | 第 06 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06`。
 
 ## 准备
 
@@ -69,6 +71,12 @@ python 04_structured_output.py agent
 python 05_agent_middleware.py guest
 python 05_agent_middleware.py admin
 python 05_agent_middleware.py error
+
+# 短期记忆：失忆 / 手写保存 / checkpointer / 多线程隔离
+python 06_session_memory.py forget
+python 06_session_memory.py manual
+python 06_session_memory.py remember
+python 06_session_memory.py threads
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -84,6 +92,7 @@ python 05_agent_middleware.py error
 | 工具结果 | `{"role":"tool", "tool_call_id":...}` | `ToolMessage(tool_call_id=...)` |
 | Agent 循环 | 自己写 `while` | `create_agent` 内部（基于 LangGraph） |
 | 系统提示 | system message | `system_prompt=` |
+| 多轮记忆 | 自己保存 `messages` 列表 | `checkpointer` + `thread_id` |
 
 ## 你在学什么
 
@@ -100,9 +109,9 @@ python 05_agent_middleware.py error
 
 ## 下一步（按需）
 
-- 给 `create_agent` 加 `checkpointer` 做多轮记忆  
-- 流式输出 `agent.stream` / `stream_events`  
-- 换真实工具（HTTP API、数据库、检索）  
+- 流式输出 `agent.stream`，再用 FastAPI + SSE 推给前端
+- 换真实工具（HTTP API、数据库、检索）
+- 基础 RAG / Agentic RAG
 - 进 LangGraph 自己画图（多 agent、人机审批）
 
 官方文档：https://docs.langchain.com/oss/python/langchain/agents
