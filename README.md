@@ -114,4 +114,6 @@ python 06_session_memory.py threads
 - 基础 RAG / Agentic RAG
 - 进 LangGraph 自己画图（多 agent、人机审批）
 
+完整目标（含远期：OpenAI Agents SDK、nanobot、Claude Code / Codex）见 `学习目标.md`。
+
 官方文档：https://docs.langchain.com/oss/python/langchain/agents
