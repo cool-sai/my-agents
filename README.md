@@ -29,8 +29,10 @@
 | `05_agent_middleware.md` | 第 05 课讲义与运行场景 |
 | `06_session_memory.py` | **短期记忆**：自己保存 messages / checkpointer + thread_id |
 | `06_session_memory.md` | 第 06 课讲义与运行场景 |
+| `07_streaming.py` | **流式输出**：invoke / 逐步 updates / token / FastAPI + SSE |
+| `07_streaming.md` | 第 07 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07`。
 
 ## 准备
 
@@ -77,6 +79,12 @@ python 06_session_memory.py forget
 python 06_session_memory.py manual
 python 06_session_memory.py remember
 python 06_session_memory.py threads
+
+# 流式：整段等待 / 每一步 / token / FastAPI+SSE
+python 07_streaming.py invoke
+python 07_streaming.py updates
+python 07_streaming.py tokens
+python 07_streaming.py sse
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -93,6 +101,7 @@ python 06_session_memory.py threads
 | Agent 循环 | 自己写 `while` | `create_agent` 内部（基于 LangGraph） |
 | 系统提示 | system message | `system_prompt=` |
 | 多轮记忆 | 自己保存 `messages` 列表 | `checkpointer` + `thread_id` |
+| 流式输出 | `create(..., stream=True)` | `agent.stream(stream_mode=...)` |
 
 ## 你在学什么
 
@@ -109,7 +118,6 @@ python 06_session_memory.py threads
 
 ## 下一步（按需）
 
-- 流式输出 `agent.stream`，再用 FastAPI + SSE 推给前端
 - 换真实工具（HTTP API、数据库、检索）
 - 基础 RAG / Agentic RAG
 - 进 LangGraph 自己画图（多 agent、人机审批）
