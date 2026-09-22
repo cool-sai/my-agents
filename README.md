@@ -38,8 +38,10 @@
 | `10_web.py` | **页面**：把 07 的 SSE 留给浏览器，服务一直开着 |
 | `10_web/` | Vite + React 页面，只用 EventSource 收事件 |
 | `10_web.md` | 第 10 课讲义与运行场景 |
+| `13_session.py` | **会话**：PyMySQLSaver，按 thread_id 把快照写进本机 MySQL |
+| `13_session.md` | 第 13 课讲义 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08 → 09 → 10`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 13`。
 
 ## 准备
 
@@ -107,6 +109,9 @@ python 09_eval.py eval
 # 页面收同一条 SSE（两个终端）
 python 10_web.py
 cd 10_web && npm install && npm run dev
+
+# 会话写进本机 MySQL（不要和 10_web.py 同时开，端口都是 8765）
+python 13_session.py
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -141,12 +146,10 @@ cd 10_web && npm install && npm run dev
 3. **先能 debug 原生 loop，再敢用框架**  
    出问题先问：模型有没有发出 tool_call？参数对不对？tool 结果有没有正确回传？
 
-## 下一步（按需）
+## 下一步
 
-- 换真实工具（HTTP API、数据库）
-- 进 LangGraph 自己画图（多 agent、人机审批）
-- 远期对照见 `学习目标.md` 第 13 条起：别的 SDK、完整运行时、coding agent
+基础 1–12 已完成。第 13 课把会话按 `thread_id` 写进本机 MySQL，页面刷新后还能读回来。
 
-完整目标（含远期：OpenAI Agents SDK、nanobot、Claude Code / Codex）见 `学习目标.md`。
+完整顺序和每条怎么算过，见 `学习目标.md`。
 
 官方文档：https://docs.langchain.com/oss/python/langchain/agents
