@@ -33,8 +33,10 @@
 | `07_streaming.md` | 第 07 课讲义与运行场景 |
 | `08_rag.py` | **RAG**：不检索 / 先搜再答 / 检索当工具 / 手册没有 |
 | `08_rag.md` | 第 08 课讲义与运行场景 |
+| `09_eval.py` | **轨迹 / 测试 / 评估**：读 messages、不调模型的测试、只查工具和事实 |
+| `09_eval.md` | 第 09 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08 → 09`。
 
 ## 准备
 
@@ -93,6 +95,11 @@ python 08_rag.py blind
 python 08_rag.py naive
 python 08_rag.py agentic
 python 08_rag.py miss
+
+# 轨迹 / 测试 / 评估（test 不调模型）
+python 09_eval.py test
+python 09_eval.py trace
+python 09_eval.py eval
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -111,6 +118,7 @@ python 08_rag.py miss
 | 多轮记忆 | 自己保存 `messages` 列表 | `checkpointer` + `thread_id` |
 | 流式输出 | `create(..., stream=True)` | `agent.stream(stream_mode=...)` |
 | 私有知识 | 检索结果写进 messages | 基础 RAG 塞提示词；Agentic RAG 用检索工具 |
+| 怎么知道答对了 | 自己看打印 | trace 读 messages；test 不调模型；eval 只查工具和关键词 |
 
 ## 你在学什么
 
@@ -128,8 +136,8 @@ python 08_rag.py miss
 ## 下一步（按需）
 
 - 换真实工具（HTTP API、数据库）
-- 对 Agent 做日志追踪、测试和评估
 - 进 LangGraph 自己画图（多 agent、人机审批）
+- 把 Agent 接到 React / Next.js
 
 完整目标（含远期：OpenAI Agents SDK、nanobot、Claude Code / Codex）见 `学习目标.md`。
 
