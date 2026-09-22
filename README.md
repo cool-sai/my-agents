@@ -35,8 +35,11 @@
 | `08_rag.md` | 第 08 课讲义与运行场景 |
 | `09_eval.py` | **轨迹 / 测试 / 评估**：读 messages、不调模型的测试、只查工具和事实 |
 | `09_eval.md` | 第 09 课讲义与运行场景 |
+| `10_web.py` | **页面**：把 07 的 SSE 留给浏览器，服务一直开着 |
+| `10_web/` | Vite + React 页面，只用 EventSource 收事件 |
+| `10_web.md` | 第 10 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08 → 09`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08 → 09 → 10`。
 
 ## 准备
 
@@ -100,6 +103,10 @@ python 08_rag.py miss
 python 09_eval.py test
 python 09_eval.py trace
 python 09_eval.py eval
+
+# 页面收同一条 SSE（两个终端）
+python 10_web.py
+cd 10_web && npm install && npm run dev
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -119,6 +126,7 @@ python 09_eval.py eval
 | 流式输出 | `create(..., stream=True)` | `agent.stream(stream_mode=...)` |
 | 私有知识 | 检索结果写进 messages | 基础 RAG 塞提示词；Agentic RAG 用检索工具 |
 | 怎么知道答对了 | 自己看打印 | trace 读 messages；test 不调模型；eval 只查工具和关键词 |
+| 接到页面 | curl 收 SSE | 浏览器 EventSource 收同一条流 |
 
 ## 你在学什么
 
@@ -137,7 +145,7 @@ python 09_eval.py eval
 
 - 换真实工具（HTTP API、数据库）
 - 进 LangGraph 自己画图（多 agent、人机审批）
-- 把 Agent 接到 React / Next.js
+- 远期对照见 `学习目标.md` 第 13 条起：别的 SDK、完整运行时、coding agent
 
 完整目标（含远期：OpenAI Agents SDK、nanobot、Claude Code / Codex）见 `学习目标.md`。
 
