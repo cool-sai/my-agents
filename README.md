@@ -31,8 +31,10 @@
 | `06_session_memory.md` | 第 06 课讲义与运行场景 |
 | `07_streaming.py` | **流式输出**：invoke / 逐步 updates / token / FastAPI + SSE |
 | `07_streaming.md` | 第 07 课讲义与运行场景 |
+| `08_rag.py` | **RAG**：不检索 / 先搜再答 / 检索当工具 / 手册没有 |
+| `08_rag.md` | 第 08 课讲义与运行场景 |
 
-建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07`。
+建议阅读/运行顺序：`01 → 03 → 02 → 04 → 05 → 06 → 07 → 08`。
 
 ## 准备
 
@@ -85,6 +87,12 @@ python 07_streaming.py invoke
 python 07_streaming.py updates
 python 07_streaming.py tokens
 python 07_streaming.py sse
+
+# RAG：不检索 / 先搜再答 / 检索当工具 / 手册没有
+python 08_rag.py blind
+python 08_rag.py naive
+python 08_rag.py agentic
+python 08_rag.py miss
 ```
 
 默认问题会同时触发：天气 + 计算器 + 时间（多 tool call）。
@@ -102,6 +110,7 @@ python 07_streaming.py sse
 | 系统提示 | system message | `system_prompt=` |
 | 多轮记忆 | 自己保存 `messages` 列表 | `checkpointer` + `thread_id` |
 | 流式输出 | `create(..., stream=True)` | `agent.stream(stream_mode=...)` |
+| 私有知识 | 检索结果写进 messages | 基础 RAG 塞提示词；Agentic RAG 用检索工具 |
 
 ## 你在学什么
 
@@ -118,8 +127,8 @@ python 07_streaming.py sse
 
 ## 下一步（按需）
 
-- 换真实工具（HTTP API、数据库、检索）
-- 基础 RAG / Agentic RAG
+- 换真实工具（HTTP API、数据库）
+- 对 Agent 做日志追踪、测试和评估
 - 进 LangGraph 自己画图（多 agent、人机审批）
 
 完整目标（含远期：OpenAI Agents SDK、nanobot、Claude Code / Codex）见 `学习目标.md`。
