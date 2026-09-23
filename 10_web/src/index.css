@@ -364,6 +364,20 @@ button {
   color: #f7f6f3;
 }
 
+.composer button.stop {
+  width: 36px;
+  padding: 0;
+}
+
+.composer button.stop i {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: #f7f6f3;
+}
+
 .composer button:disabled,
 .composer textarea:disabled {
   opacity: 0.45;

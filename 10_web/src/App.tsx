@@ -16,7 +16,8 @@ type AgentEvent =
   | { type: "token"; text: string }
   | { type: "tool_call"; name: string; args: Record<string, unknown> }
   | { type: "tool_result"; name: string; content: string }
-  | { type: "done" };
+  | { type: "done" }
+  | { type: "cancelled" };
 
 function readSessions(): { sessions: Session[]; active: string } {
   const raw = localStorage.getItem(SESSIONS_KEY);
@@ -40,6 +41,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const sourceRef = useRef<EventSource | null>(null);
   const activeRef = useRef(thread);
+  const stoppedRef = useRef(false);
   const loadGen = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   activeRef.current = thread;
@@ -53,14 +55,40 @@ export function App() {
     const gen = ++loadGen.current;
     const id = thread;
     fetch(`${AGENT}/history?thread_id=${encodeURIComponent(id)}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body: { rows: Row[] } | null) => {
-        if (gen !== loadGen.current || !body) {
+      .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
+      .then((body: { rows: Row[]; pending?: AgentEvent[]; live?: boolean }) => {
+        if (gen !== loadGen.current) {
           return;
         }
-        setRows(body.rows);
+        const pending = body.pending ?? [];
+        setRows(pending.reduce(applyEvent, body.rows));
+        if (!body.live) {
+          return;
+        }
+        stoppedRef.current = false;
+        sourceRef.current?.close();
+        const source = new EventSource(
+          `${AGENT}/listen?thread_id=${encodeURIComponent(id)}&after=${pending.length}`,
+        );
+        sourceRef.current = source;
+        setBusy(true);
+        watch(source, id, true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (gen !== loadGen.current) {
+          return;
+        }
+        setRows((prev) =>
+          prev.length > 0
+            ? prev
+            : [
+                {
+                  kind: "answer",
+                  text: "连不上 Agent。先在另一个终端运行 python 14_cancel.py",
+                },
+              ],
+        );
+      });
     return () => {
       sourceRef.current?.close();
     };
@@ -75,7 +103,10 @@ export function App() {
       return;
     }
     activeRef.current = id;
-    sourceRef.current?.close();
+    const source = sourceRef.current;
+    sourceRef.current = null;
+    source?.close();
+    stoppedRef.current = false;
     setBusy(false);
     setThread(id);
   }
@@ -92,6 +123,7 @@ export function App() {
     if (!text || busy) {
       return;
     }
+    stoppedRef.current = false;
     sourceRef.current?.close();
     loadGen.current += 1;
     const id = thread;
@@ -110,31 +142,56 @@ export function App() {
       `${AGENT}/chat?thread_id=${encodeURIComponent(id)}&q=${encodeURIComponent(text)}`,
     );
     sourceRef.current = source;
+    watch(source, id, false);
+  }
 
+  function watch(source: EventSource, id: string, resume: boolean) {
+    let saw = false;
     source.onmessage = (message) => {
       if (activeRef.current !== id) {
         return;
       }
       const agentEvent = JSON.parse(message.data) as AgentEvent;
-      if (agentEvent.type === "tool_call") {
+      if (agentEvent.type === "token") {
+        if (stoppedRef.current) {
+          return;
+        }
+        saw = true;
+        setRows((prev) => appendToken(prev, agentEvent.text));
+      } else if (agentEvent.type === "tool_call") {
+        saw = true;
         const args = JSON.stringify(agentEvent.args);
         push({ kind: "tool", text: `→ ${agentEvent.name}(${args})` });
       } else if (agentEvent.type === "tool_result") {
+        saw = true;
         push({
           kind: "tool",
           text: `← ${agentEvent.name}: ${agentEvent.content}`,
         });
-      } else if (agentEvent.type === "token") {
-        setRows((prev) => appendToken(prev, agentEvent.text));
-      } else if (agentEvent.type === "done") {
+      } else if (agentEvent.type === "done" || agentEvent.type === "cancelled") {
         source.close();
         setBusy(false);
+        if (resume && !saw) {
+          fetch(`${AGENT}/history?thread_id=${encodeURIComponent(id)}`)
+            .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
+            .then((body: { rows: Row[] }) => {
+              if (activeRef.current !== id) {
+                return;
+              }
+              setRows(body.rows);
+            })
+            .catch(() => {});
+        }
       }
     };
 
     source.onerror = () => {
       source.close();
       if (activeRef.current !== id) {
+        return;
+      }
+      if (stoppedRef.current) {
+        setBusy(false);
         return;
       }
       setBusy(false);
@@ -145,7 +202,7 @@ export function App() {
               ...prev,
               {
                 kind: "answer",
-                text: "连不上 Agent。先在另一个终端运行 python 13_session.py",
+                text: "连不上 Agent。先在另一个终端运行 python 14_cancel.py",
               },
             ],
       );
@@ -154,6 +211,32 @@ export function App() {
 
   function push(row: Row) {
     setRows((prev) => [...prev, row]);
+  }
+
+  function stop() {
+    if (stoppedRef.current) {
+      return;
+    }
+    stoppedRef.current = true;
+    const id = thread;
+    const source = sourceRef.current;
+    void fetch(`${AGENT}/cancel?thread_id=${encodeURIComponent(id)}`)
+      .then(async (response) => {
+        const body = response.ok
+          ? ((await response.json()) as { stopped?: boolean })
+          : null;
+        if (!body?.stopped && activeRef.current === id) {
+          source?.close();
+          setBusy(false);
+        }
+      })
+      .catch(() => {
+        if (activeRef.current !== id) {
+          return;
+        }
+        source?.close();
+        setBusy(false);
+      });
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -238,8 +321,14 @@ export function App() {
               onKeyDown={onKeyDown}
               disabled={busy}
             />
-            <button type="submit" disabled={busy || question.trim() === ""}>
-              {busy ? "…" : "发送"}
+            <button
+              type={busy ? "button" : "submit"}
+              className={busy ? "stop" : undefined}
+              aria-label={busy ? "停止" : "发送"}
+              disabled={!busy && question.trim() === ""}
+              onClick={busy ? stop : undefined}
+            >
+              {busy ? <i /> : "发送"}
             </button>
           </div>
         </form>
@@ -303,6 +392,19 @@ function prettyArgs(raw: string): string {
     // 参数不是 JSON 时原样显示。
   }
   return raw;
+}
+
+function applyEvent(rows: Row[], event: AgentEvent): Row[] {
+  if (event.type === "token") {
+    return appendToken(rows, event.text);
+  }
+  if (event.type === "tool_call") {
+    return [...rows, { kind: "tool", text: `→ ${event.name}(${JSON.stringify(event.args)})` }];
+  }
+  if (event.type === "tool_result") {
+    return [...rows, { kind: "tool", text: `← ${event.name}: ${event.content}` }];
+  }
+  return rows;
 }
 
 function appendToken(rows: Row[], text: string): Row[] {
