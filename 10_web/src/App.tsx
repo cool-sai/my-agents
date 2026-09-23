@@ -1,10 +1,13 @@
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 const AGENT = "http://127.0.0.1:8765";
 const SESSIONS_KEY = "stu-sessions";
 const ACTIVE_KEY = "stu-active-thread";
+// 还在吐字、并且滚动已经停稳时，离底部不超过这一段才继续跟着走。
+const NEAR_BOTTOM = 96;
+const SCROLL_IDLE = 120;
 
 type Row = { kind: "user" | "tool" | "answer"; text: string };
 type Session = { id: string; title: string };
@@ -43,8 +46,18 @@ export function App() {
   const activeRef = useRef(thread);
   const stoppedRef = useRef(false);
   const loadGen = useRef(0);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+  // 为真就贴着底部。人一开始滚就变成假。
+  const stickRef = useRef(true);
   activeRef.current = thread;
+
+  function followBottom() {
+    const el = logRef.current;
+    if (!el || !stickRef.current) {
+      return;
+    }
+    el.scrollTop = el.scrollHeight;
+  }
 
   useEffect(() => {
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
@@ -61,6 +74,7 @@ export function App() {
           return;
         }
         const pending = body.pending ?? [];
+        stickRef.current = true;
         setRows(pending.reduce(applyEvent, body.rows));
         if (!body.live) {
           return;
@@ -95,7 +109,60 @@ export function App() {
   }, [thread]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
+    const el = logRef.current;
+    if (!el) {
+      return;
+    }
+    let pressed = false;
+    let timer = 0;
+    const pause = () => {
+      stickRef.current = false;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const box = logRef.current;
+        if (!box || !busy) {
+          return;
+        }
+        const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
+        stickRef.current = gap <= NEAR_BOTTOM;
+        if (stickRef.current) {
+          followBottom();
+        }
+      }, SCROLL_IDLE);
+    };
+    const down = () => {
+      pressed = true;
+    };
+    const move = () => {
+      if (!pressed) {
+        return;
+      }
+      pause();
+    };
+    const up = () => {
+      pressed = false;
+    };
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    window.addEventListener("blur", up);
+    el.addEventListener("wheel", pause, { passive: true });
+    el.addEventListener("touchmove", pause, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      window.removeEventListener("blur", up);
+      el.removeEventListener("wheel", pause);
+      el.removeEventListener("touchmove", pause);
+    };
+  }, [busy]);
+
+  useLayoutEffect(() => {
+    followBottom();
   }, [rows]);
 
   function openSession(id: string) {
@@ -103,6 +170,7 @@ export function App() {
       return;
     }
     activeRef.current = id;
+    stickRef.current = true;
     const source = sourceRef.current;
     sourceRef.current = null;
     source?.close();
@@ -135,6 +203,7 @@ export function App() {
           : session,
       ),
     );
+    stickRef.current = true;
     setRows((prev) => [...prev, { kind: "user", text }]);
     setBusy(true);
 
@@ -278,7 +347,7 @@ export function App() {
         <header className="topbar">
           <p>{active?.title ?? "星林"}</p>
         </header>
-        <div className="log">
+        <div className="log" ref={logRef}>
           <div className="column">
             {rows.length === 0 ? (
               <div className="empty">
@@ -308,7 +377,6 @@ export function App() {
                 <i />
               </div>
             ) : null}
-            <div ref={bottomRef} />
           </div>
         </div>
         <form className="composer" onSubmit={ask}>
